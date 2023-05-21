@@ -1,0 +1,3 @@
+#!/bin/sh
+
+/bin/bash --rcfile /usr/lib/system/bash.bashrc

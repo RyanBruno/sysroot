@@ -1,0 +1,13 @@
+[Unit]
+Description=System Home mount /home
+ConditionPathIsSymbolicLink=!/tmp
+Conflicts=umount.target
+Before=local-fs.target umount.target
+
+[Mount]
+What=/dev/sdc
+Where=/home
+#Options=mode=1777,strictatime,nosuid,nodev,size=50%%,nr_inodes=1m
+
+[Install]
+WantedBy=multi-user.target
