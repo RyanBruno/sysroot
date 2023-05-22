@@ -1,4 +1,2 @@
 
 enable system-*
-enable home.mount
-enable mnt-workspace.mount
