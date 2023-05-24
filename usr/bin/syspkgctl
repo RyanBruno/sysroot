@@ -1,0 +1,72 @@
+#!/bin/bash
+
+export SYSREPO=/home/ryan/sysrepo
+
+usage() {
+	local -r COMMAND=${BASH_SOURCE[0]##*/}
+	cat <<- _EOF_
+		Usage: ${COMMAND} [COMMAND] [OPTIONS]
+
+		Unified command-line frontend for devtools.
+
+		COMMANDS
+            clone   Used to clone a package
+
+		OPTIONS
+		    -h, --help     Show this help text
+_EOF_
+}
+
+if (( $# < 1 )); then
+	usage
+	exit 1
+fi
+
+while (( $# )); do
+    case $1 in
+        -h|--help)
+        usage
+        exit 0
+        ;;
+    clone)
+        git clone git@github.com:RyanBruno/sysarch.git
+        exit 0
+        ;;
+    build)
+        makepkg --sign
+        exit 0
+        ;;
+    release)
+        /usr/bin/cp -u *.pkg.tar.* ${SYSREPO}
+        git -C ${SYSREPO} add ${SYSREPO}/*.pkg.tar.*
+        exit 0
+        ;;
+    update)
+        repo-add ${SYSREPO}/system.db.tar.gz ${SYSREPO}/*.pkg.tar.zst
+        rm ${SYSREPO}/*old*
+        rm ${SYSREPO}/system.db
+        rm ${SYSREPO}/system.files
+        #rm ${SYSREPO}/system.db.sig
+        #rm ${SYSREPO}/system.files.sig
+        cp ${SYSREPO}/system.db.tar.gz ${SYSREPO}/system.db
+        cp ${SYSREPO}/system.files.tar.gz ${SYSREPO}/system.files
+        #cp ${SYSREPO}/system.db.tar.gz.sig ${SYSREPO}/system.db.sig
+        #cp ${SYSREPO}/system.files.tar.gz.sig ${SYSREPO}/system.files.sig
+
+        git -C ${SYSREPO} add ${SYSREPO}/*.files*
+        git -C ${SYSREPO} add ${SYSREPO}/*.db*
+        exit 0
+        ;;
+    push)
+        git -C ${SYSREPO} commit
+        git -C ${SYSREPO} push origin master
+        exit 0
+        ;;
+    *)
+        echo "invalid command:" "$1"
+        exit -1
+        ;;
+    esac
+done
+
+
