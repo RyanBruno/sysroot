@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export SYSREPO=/home/ryan/sysrepo
+export SYSREPO=~/.local/lib/sysrepo
 
 usage() {
 	local -r COMMAND=${BASH_SOURCE[0]##*/}
@@ -10,7 +10,10 @@ usage() {
 		Unified command-line frontend for devtools.
 
 		COMMANDS
-            clone   Used to clone a package
+            repo-clone  Used to clone the repo
+            pkg-clone   Used to clone all packages
+            build       Uses makepkg to build the package
+            release     Releases the build to the repo
 
 		OPTIONS
 		    -h, --help     Show this help text
@@ -28,7 +31,12 @@ while (( $# )); do
         usage
         exit 0
         ;;
-    clone)
+    repo-clone)
+        mkdir -p ${SYSREPO}
+        git clone git@github.com:RyanBruno/sysrepo.git ${SYSREPO}
+        exit 0
+        ;;
+    pkg-clone)
         git clone git@github.com:RyanBruno/sysarch.git
         exit 0
         ;;
@@ -39,9 +47,8 @@ while (( $# )); do
     release)
         /usr/bin/cp -u *.pkg.tar.* ${SYSREPO}
         git -C ${SYSREPO} add ${SYSREPO}/*.pkg.tar.*
-        exit 0
-        ;;
-    update)
+
+        # Repo Update
         repo-add ${SYSREPO}/system.db.tar.gz ${SYSREPO}/*.pkg.tar.zst
         rm ${SYSREPO}/*old*
         rm ${SYSREPO}/system.db
@@ -55,9 +62,8 @@ while (( $# )); do
 
         git -C ${SYSREPO} add ${SYSREPO}/*.files*
         git -C ${SYSREPO} add ${SYSREPO}/*.db*
-        exit 0
-        ;;
-    push)
+
+        # Repo Push
         git -C ${SYSREPO} commit
         git -C ${SYSREPO} push origin master
         exit 0
