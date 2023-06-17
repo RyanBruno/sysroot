@@ -49,7 +49,13 @@ while (( $# )); do
         ${GIT} branch -d ${BRANCH}
         exit 0
         ;;
+    save)
+        ${GIT} add .
+        ${GIT} commit -am 'sysgit save'
+        ;;
     norm)
+        ${GIT} add .
+        ${GIT} commit -am 'sysgit save'
         ${GIT} fetch
         ${GIT} checkout ${MASTER}
         ${GIT} branch -l 'feat-*' --merged | while read -r line; do ${GIT} branch -d ${line}; done
@@ -60,11 +66,14 @@ while (( $# )); do
         find -maxdepth 1 -type d |
             while read -r line;
             do
+                ${GIT} add .
+                ${GIT} commit -am 'sysgit save'
+
                 ${GIT} -C $line status 2> /dev/null > /dev/null || continue
 
                 ${GIT} -C $line fetch > /dev/null
                 ${GIT} -C $line checkout ${MASTER} > /dev/null
-                ${GIT} -C $line branch -l 'feat-*' --merged | while read -r line; do echo ${line}; done #${GIT} branch -d ${line}; done
+                ${GIT} -C $line branch -l 'feat-*' --merged | while read -r line; do ${GIT} branch -d ${line}; done
                 ${GIT} -C $line push --all > /dev/null
             done
         exit 0
