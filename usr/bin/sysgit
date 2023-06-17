@@ -52,6 +52,7 @@ while (( $# )); do
     save)
         ${GIT} add .
         ${GIT} commit -am 'sysgit save'
+        exit 0
         ;;
     norm)
         ${GIT} add .
