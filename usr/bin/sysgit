@@ -1,0 +1,79 @@
+#!/bin/bash
+
+
+export MASTER="master"
+export GIT="git"
+
+
+echo "Welcome to my opinionated git wrapper"
+
+usage() {
+	local -r COMMAND=${BASH_SOURCE[0]##*/}
+	cat <<- _EOF_
+		Usage: ${COMMAND} [COMMAND] [OPTIONS]
+
+		Unified command-line frontend for devtools.
+
+		COMMANDS
+            start-feat  Creates a feature branch from master
+            merge-feat  Merges feature branch into master
+            norm        Remove merged branches, push local changes, fetch
+            norm-all    norm all git repos in a folder
+            
+		OPTIONS
+		    -h, --help     Show this help text
+_EOF_
+}
+
+if (( $# < 1 )); then
+	usage
+	exit 1
+fi
+
+while (( $# )); do
+    case $1 in
+        -h|--help)
+        usage
+        exit 0
+        ;;
+    start-feat)
+        ${GIT} checkout ${MASTER}
+        ${GIT} checkout -b feat-$(uuidgen)-${2}
+        exit 0
+        ;;
+    merge-feat)
+        export BRANCH=${GIT} branch show-current
+
+        ${GIT} checkout ${MASTER}
+        ${GIT} merge --no-ff --commit -e --gpg-sign --no-summary ${BRANCH}
+        ${GIT} branch -d ${BRANCH}
+        exit 0
+        ;;
+    norm)
+        ${GIT} fetch
+        ${GIT} checkout ${MASTER}
+        ${GIT} branch -l 'feat-*' --merged | while read -r line; do ${GIT} branch -d ${line}; done
+        ${GIT} push --all
+        exit 0
+        ;;
+    norm-all)
+        find -maxdepth 1 -type d |
+            while read -r line;
+            do
+                ${GIT} -C $line status 2> /dev/null > /dev/null || continue
+
+                ${GIT} -C $line fetch > /dev/null
+                ${GIT} -C $line checkout ${MASTER} > /dev/null
+                ${GIT} -C $line branch -l 'feat-*' --merged | while read -r line; do echo ${line}; done #${GIT} branch -d ${line}; done
+                ${GIT} -C $line push --all > /dev/null
+            done
+        exit 0
+        ;;
+    *)
+        echo "invalid command:" "$1"
+        exit -1
+        ;;
+    esac
+done
+
+
