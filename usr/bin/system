@@ -1,0 +1,5 @@
+#!/bin/bash
+
+echo "Removing all non-system packages"
+
+pacman -D --asdeps $(pacman -Qqe) && pacman -D --asexplicit system && pacman -Qtdq | pacman -Rns -
