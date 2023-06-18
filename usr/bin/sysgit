@@ -108,8 +108,9 @@ while (( $# )); do
             do
                 ${GIT} -C $line status 2> /dev/null > /dev/null || continue
                 ${GIT} -C $line add .
-                ${GIT} -C $line commit -am 'sysgit save' 2> /dev/null
-                echo $?
+                ${GIT} -C $line commit -am 'sysgit save' 2> /dev/null > /dev/null || continue
+                ${GIT} -C $line show --oneline -s \
+                    | echo -e "${line}:" "$(</dev/stdin)"
             done
         exit 0
         ;;
