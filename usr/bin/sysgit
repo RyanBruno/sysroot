@@ -25,6 +25,19 @@ usage() {
 _EOF_
 }
 
+status() {
+
+    #${GIT} fetch > /dev/null || exit
+
+    OUTPUT=$(${GIT} -C $1 status -s -b --ignored)
+
+    BRANCH=$(echo "${OUTPUT}" | grep -E "^## " | cut -c 4-)
+    IGNORED=$(echo "${OUTPUT}" | grep -E "^!! " | wc -l)
+    UPDATED=$(echo "${OUTPUT}" | grep -v -E "(^!!|^##) " | wc -l)
+
+    echo -e "${1}:${UPDATED}:${IGNORED}:${BRANCH}"
+}
+
 if (( $# < 1 )); then
 	usage
 	exit 1
@@ -34,6 +47,23 @@ while (( $# )); do
     case $1 in
         -h|--help)
         usage
+        exit 0
+        ;;
+    status)
+        status . \
+            | echo -e "Path:Updated:Ignored:Branch\n""$(</dev/stdin)" \
+            | column -t -s ':' -T 1
+        exit 0
+        ;;
+    status-all)
+        find -maxdepth 1 -type d |
+            while read -r line;
+            do
+                ${GIT} -C $line status 2> /dev/null > /dev/null || continue
+                status ${line}
+            done \
+            | echo -e "Path:Updated:Ignored:Branch\n""$(</dev/stdin)" \
+            | column -t -s ':' -T 1
         exit 0
         ;;
     start-feat)
