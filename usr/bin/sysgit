@@ -108,7 +108,7 @@ while (( $# )); do
             do
                 ${GIT} -C $line status 2> /dev/null > /dev/null || continue
                 ${GIT} -C $line add .
-                ${GIT} -C $line commit -am 'sysgit save'
+                ${GIT} -C $line commit -am 'sysgit save' 2> /dev/null
             done
         exit 0
         ;;
