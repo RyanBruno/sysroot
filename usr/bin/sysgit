@@ -15,6 +15,13 @@ usage() {
 		Unified command-line frontend for devtools.
 
 		COMMANDS
+            status-all  Prints a summary status of all repos in current folder
+            push-all    Runs git push --all  all repos in current folder
+            save        Adds all non-ignored files and commits with a generic message
+            save-all    Saves all repos in the current folder
+
+            --
+
             start-feat  Creates a feature branch from master
             merge-feat  Merges feature branch into master
             norm        Remove merged branches, push local changes, fetch
@@ -66,6 +73,16 @@ while (( $# )); do
             | column -t -s ':' -T 1
         exit 0
         ;;
+    push-all)
+        find -maxdepth 1 -type d |
+            while read -r line;
+            do
+                ${GIT} -C $line status 2> /dev/null > /dev/null || continue
+                ${GIT} -C $line push --all > /dev/null
+            done
+        exit 0
+        ;;
+
     start-feat)
         ${GIT} checkout ${MASTER}
         ${GIT} checkout -b feat-$(uuidgen)-${2}
@@ -82,6 +99,17 @@ while (( $# )); do
     save)
         ${GIT} add .
         ${GIT} commit -am 'sysgit save'
+        exit 0
+        ;;
+
+    save-all)
+        find -maxdepth 1 -type d |
+            while read -r line;
+            do
+                ${GIT} -C $line status 2> /dev/null > /dev/null || continue
+                ${GIT} -C $line add .
+                ${GIT} -C $line commit -am 'sysgit save'
+            done
         exit 0
         ;;
     norm)
