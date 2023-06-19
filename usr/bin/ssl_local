@@ -1,0 +1,5 @@
+#!/bin/bash
+
+echo "Generating a self-signed ssl cert for localhost..."
+mkdir -p /etc/letsencrypt/live/localhost/
+openssl req -x509 -newkey rsa:4096 -keyout /etc/letsencrypt/live/localhost/privkey.pem -out /etc/letsencrypt/live/localhost/fullchain.pem -sha256 -days 365 -nodes

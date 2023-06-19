@@ -1,0 +1,149 @@
+#!/bin/bash
+
+
+export MASTER="master"
+export GIT="git"
+
+
+echo "Welcome to my opinionated git wrapper"
+
+usage() {
+	local -r COMMAND=${BASH_SOURCE[0]##*/}
+	cat <<- _EOF_
+		Usage: ${COMMAND} [COMMAND] [OPTIONS]
+
+		Unified command-line frontend for devtools.
+
+		COMMANDS
+            status-all  Prints a summary status of all repos in current folder
+            push-all    Runs git push --all  all repos in current folder
+            save        Adds all non-ignored files and commits with a generic message
+            save-all    Saves all repos in the current folder
+
+            --
+
+            start-feat  Creates a feature branch from master
+            merge-feat  Merges feature branch into master
+            norm        Remove merged branches, push local changes, fetch
+            norm-all    norm all git repos in a folder
+            
+		OPTIONS
+		    -h, --help     Show this help text
+_EOF_
+}
+
+status() {
+
+    #${GIT} fetch > /dev/null || exit
+
+    OUTPUT=$(${GIT} -C $1 status -s -b --ignored)
+
+    BRANCH=$(echo "${OUTPUT}" | grep -E "^## " | cut -c 4-)
+    IGNORED=$(echo "${OUTPUT}" | grep -E "^!! " | wc -l)
+    UPDATED=$(echo "${OUTPUT}" | grep -v -E "(^!!|^##) " | wc -l)
+
+    echo -e "${1}:${UPDATED}:${IGNORED}:${BRANCH}"
+}
+
+if (( $# < 1 )); then
+	usage
+	exit 1
+fi
+
+while (( $# )); do
+    case $1 in
+        -h|--help)
+        usage
+        exit 0
+        ;;
+    status)
+        status . \
+            | echo -e "Path:Updated:Ignored:Branch\n""$(</dev/stdin)" \
+            | column -t -s ':' -T 1
+        exit 0
+        ;;
+    status-all)
+        find -maxdepth 1 -type d |
+            while read -r line;
+            do
+                ${GIT} -C $line status 2> /dev/null > /dev/null || continue
+                status ${line}
+            done \
+            | echo -e "Path:Updated:Ignored:Branch\n""$(</dev/stdin)" \
+            | column -t -s ':' -T 1
+        exit 0
+        ;;
+    push-all)
+        find -maxdepth 1 -type d |
+            while read -r line;
+            do
+                ${GIT} -C $line status 2> /dev/null > /dev/null || continue
+                ${GIT} -C $line push --all > /dev/null
+            done
+        exit 0
+        ;;
+
+    start-feat)
+        ${GIT} checkout ${MASTER}
+        ${GIT} checkout -b feat-$(uuidgen)-${2}
+        exit 0
+        ;;
+    merge-feat)
+        export BRANCH=${GIT} branch show-current
+
+        ${GIT} checkout ${MASTER}
+        ${GIT} merge --no-ff --commit -e --gpg-sign --no-summary ${BRANCH}
+        ${GIT} branch -d ${BRANCH}
+        exit 0
+        ;;
+    save)
+        ${GIT} add .
+        ${GIT} commit -am 'sysgit save'
+        exit 0
+        ;;
+
+    save-all)
+        find -maxdepth 1 -type d |
+            while read -r line;
+            do
+                ${GIT} -C $line status 2> /dev/null > /dev/null || continue
+                ${GIT} -C $line add .
+                ${GIT} -C $line commit -am 'sysgit save' 2> /dev/null > /dev/null || continue
+                ${GIT} -C $line show --oneline -s \
+                    | echo -e "${line}:" "$(</dev/stdin)"
+            done
+        exit 0
+        ;;
+    norm)
+        ${GIT} add .
+        ${GIT} commit -am 'sysgit save'
+        ${GIT} fetch
+        ${GIT} checkout ${MASTER}
+        ${GIT} branch -l 'feat-*' --merged | while read -r line; do ${GIT} branch -d ${line}; done
+        ${GIT} push --all
+        exit 0
+        ;;
+    norm-all)
+        find -maxdepth 1 -type d |
+            while read -r line;
+            do
+                ${GIT} add .
+                ${GIT} commit -am 'sysgit save'
+
+                ${GIT} -C $line status 2> /dev/null > /dev/null || continue
+
+                ${GIT} -C $line fetch > /dev/null
+                ${GIT} -C $line checkout ${MASTER} > /dev/null
+                ${GIT} -C $line branch -l 'feat-*' --merged | while read -r line; do ${GIT} branch -d ${line}; done
+                ${GIT} -C $line push --all > /dev/null
+            done
+        exit 0
+        ;;
+    *)
+        echo "invalid command:" "$1"
+        exit -1
+        ;;
+    esac
+done
+
+
