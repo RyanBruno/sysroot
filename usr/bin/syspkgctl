@@ -41,7 +41,7 @@ while (( $# )); do
         exit 0
         ;;
     build)
-        makepkg --sign
+        makepkg -s --sign
         exit 0
         ;;
     release)
